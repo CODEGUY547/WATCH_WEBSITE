@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="240 270 740 480" role="img" aria-labelledby="title">
+  <title id="title">Wrist Mode monogram</title>
+  <defs>
+    <linearGradient id="wm-gold" x1="285" y1="315" x2="925" y2="715" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#e0cb98"/>
+      <stop offset="0.48" stop-color="#c4a35a"/>
+      <stop offset="1" stop-color="#8a6c2d"/>
+    </linearGradient>
+  </defs>
+  <g fill="url(#wm-gold)">
+    <polygon points="265,433 338,433 465,652 465,725 430,725"/>
+    <polygon points="461,303 748,722 668,722 461,422"/>
+    <polygon points="640,393 780,600 768,692 612,468"/>
+    <polygon points="892,433 955,433 955,725 892,725 892,540 768,692 778,598"/>
+    <polygon points="735,380 838,288 748,370"/>
+    <circle cx="735" cy="380" r="17"/>
+  </g>
+  <g fill="none" stroke="url(#wm-gold)" stroke-linecap="round" stroke-width="9">
+    <path d="M522 327 Q620 280 718 358"/>
+    <path d="M748 402 Q752 452 738 500"/>
+  </g>
+</svg>
