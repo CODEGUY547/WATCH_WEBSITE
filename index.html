@@ -9,8 +9,10 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Manrope:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@12/swiper-bundle.min.css">
   <link rel="icon" type="image/svg+xml" href="assets/wrist-mode-mark.svg">
   <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="hero-movement.css">
 </head>
 <body class="is-loading">
   <a class="skip-link" href="#main">Skip to content</a>
@@ -95,17 +97,6 @@
       <div class="scroll-cue" aria-hidden="true"><span></span><small>Scroll to discover</small></div>
     </section>
 
-    <section class="manifesto section-light" aria-labelledby="manifesto-title">
-      <div class="chapter-label reveal"><span>00</span><p>Our philosophy</p></div>
-      <div class="manifesto-content">
-        <h2 id="manifesto-title" class="word-reveal">A watch does more than keep time. It holds a moment, marks a chapter, and quietly says who you are.</h2>
-        <div class="manifesto-foot reveal">
-          <p>Wrist Mode brings together distinct pieces and thoughtful guidance, so choosing a watch feels considered—not complicated.</p>
-          <div class="mini-dial" aria-hidden="true"><span>WM</span></div>
-        </div>
-      </div>
-    </section>
-
     <section class="collections" id="collections" aria-labelledby="collections-title">
       <div class="collection-heading">
         <div class="chapter-label chapter-light reveal"><span>01</span><p>The collection</p></div>
@@ -113,8 +104,9 @@
         <p class="reveal">Our selection changes with each arrival. These are the worlds you can explore when you visit Wrist Mode.</p>
       </div>
 
-      <div class="collection-list">
-        <article class="collection-panel reveal">
+      <div class="collection-carousel swiper" aria-label="Wrist Mode collections">
+        <div class="collection-list swiper-wrapper">
+        <article class="collection-panel swiper-slide reveal">
           <a href="#visit" aria-label="Ask about watches for him">
             <div class="panel-image"><img src="assets/collection-men.jpeg" alt="Men's chronograph watch with a brown leather strap" loading="lazy"></div>
             <div class="panel-number">01</div>
@@ -123,7 +115,7 @@
           </a>
         </article>
 
-        <article class="collection-panel reveal">
+        <article class="collection-panel swiper-slide reveal">
           <a href="#visit" aria-label="Ask about watches for her">
             <div class="panel-image"><img src="assets/collection-women.jpeg" alt="Elegant women's silver watch on a presentation cushion" loading="lazy"></div>
             <div class="panel-number">02</div>
@@ -132,7 +124,7 @@
           </a>
         </article>
 
-        <article class="collection-panel reveal">
+        <article class="collection-panel swiper-slide reveal">
           <a href="#visit" aria-label="Ask about wooden watches">
             <div class="panel-image"><img src="assets/collection-wooden.jpeg" alt="Natural wooden wristwatch with a clean white dial" loading="lazy"></div>
             <div class="panel-number">03</div>
@@ -140,6 +132,13 @@
             <span class="panel-action">View in store <i>↗</i></span>
           </a>
         </article>
+        </div>
+
+        <div class="collection-controls">
+          <button class="collection-prev" type="button" aria-label="Previous collection">←</button>
+          <div class="collection-pagination" aria-label="Collection pagination"></div>
+          <button class="collection-next" type="button" aria-label="Next collection">→</button>
+        </div>
       </div>
     </section>
 
@@ -239,16 +238,6 @@
       </div>
     </section>
 
-    <div class="kinetic-line" aria-hidden="true">
-      <div><span>TIME</span><i>✦</i><span>STYLE</span><i>✦</i><span>CHARACTER</span><i>✦</i><span>YOUR MODE</span><i>✦</i><span>TIME</span><i>✦</i><span>STYLE</span><i>✦</i><span>CHARACTER</span><i>✦</i><span>YOUR MODE</span><i>✦</i></div>
-    </div>
-
-    <section class="interlude" aria-label="Wrist Mode statement">
-      <div class="interlude-ring" aria-hidden="true"><span></span><i>WM</i></div>
-      <p class="reveal">Not simply an accessory.</p>
-      <h2 class="reveal">A signature you carry.</h2>
-    </section>
-
     <section class="editorial section-light" aria-labelledby="editorial-title">
       <div class="editorial-head">
         <div class="chapter-label reveal"><span>02</span><p>Selected details</p></div>
@@ -328,6 +317,8 @@
     <p class="copyright">© <span id="year"></span> Wrist Mode</p>
   </footer>
 
+  <script src="https://cdn.jsdelivr.net/npm/swiper@12/swiper-bundle.min.js"></script>
   <script src="script.js"></script>
+  <script src="hero-movement.js"></script>
 </body>
 </html>

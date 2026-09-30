@@ -144,9 +144,10 @@ h1 { margin-bottom: 2.2rem; font-family: var(--serif); font-size: clamp(5rem, 10
 .collection-heading h2 { margin: 0; font-family: var(--serif); font-size: clamp(4rem, 7vw, 7.5rem); font-weight: 400; line-height: .79; letter-spacing: -.04em; }
 .collection-heading h2 em { color: var(--gold-light); }
 .collection-heading > p { margin: 0; color: rgba(255,255,255,.56); font-size: .86rem; }
-.collection-list { display: grid; grid-template-columns: repeat(3, 1fr); gap: .7rem; }
-.collection-panel { min-width: 0; }
-.collection-panel > a { position: relative; min-height: 42rem; display: flex; flex-direction: column; justify-content: space-between; padding: 1.6rem; overflow: hidden; isolation: isolate; }
+.collection-carousel { width: 100%; overflow: hidden; }
+.collection-list { display: flex; gap: 0; }
+.collection-panel { min-width: 0; height: auto; }
+.collection-panel > a { position: relative; height: 100%; min-height: 42rem; display: flex; flex-direction: column; justify-content: space-between; padding: 1.6rem; overflow: hidden; isolation: isolate; }
 .panel-image { position: absolute; inset: 0; z-index: -2; overflow: hidden; }
 .panel-image img { height: 100%; object-fit: cover; transition: transform 1s cubic-bezier(.19,1,.22,1), filter .5s; }
 .collection-panel:nth-child(2) .panel-image img { object-position: 58% center; }
@@ -159,6 +160,13 @@ h1 { margin-bottom: 2.2rem; font-family: var(--serif); font-size: clamp(5rem, 10
 .panel-copy h3 { margin-bottom: 1.4rem; font-family: var(--serif); font-size: clamp(3.5rem, 5vw, 5.2rem); font-weight: 400; line-height: .9; }
 .panel-action { width: fit-content; padding-bottom: .35rem; border-bottom: 1px solid rgba(255,255,255,.65); font-size: .65rem; text-transform: uppercase; letter-spacing: .14em; }
 .panel-action i { margin-left: .3rem; color: var(--gold-light); font-style: normal; }
+.collection-controls { display: flex; justify-content: flex-end; align-items: center; gap: .85rem; margin-top: 1.6rem; }
+.collection-prev, .collection-next { width: 3.2rem; aspect-ratio: 1; display: grid; place-items: center; padding: 0; border: 1px solid rgba(255,255,255,.28); border-radius: 50%; color: var(--paper); background: transparent; cursor: pointer; transition: color .25s, border-color .25s, background .25s; }
+.collection-prev:hover, .collection-next:hover, .collection-prev:focus-visible, .collection-next:focus-visible { color: var(--ink); border-color: var(--gold-light); background: var(--gold-light); }
+.collection-prev.swiper-button-disabled, .collection-next.swiper-button-disabled { cursor: default; opacity: .28; }
+.collection-pagination { position: static !important; width: auto !important; display: flex; align-items: center; gap: .42rem; margin-right: .2rem; }
+.collection-pagination .swiper-pagination-bullet { width: .42rem; height: .42rem; margin: 0 !important; opacity: .35; background: var(--paper); transition: width .3s, opacity .3s, background .3s; }
+.collection-pagination .swiper-pagination-bullet-active { width: 1.8rem; border-radius: 1rem; opacity: 1; background: var(--gold); }
 
 /* Scroll-controlled selected pieces */
 .lineup { color: var(--white); background: #081713; }
@@ -223,19 +231,40 @@ h1 { margin-bottom: 2.2rem; font-family: var(--serif); font-size: clamp(5rem, 10
 .kinetic-line i { color: var(--ink); font-style: normal; font-size: .8rem; }
 @keyframes marquee { to { transform: translateX(-50%); } }
 
-/* Interlude */
-.interlude { position: relative; min-height: 50rem; display: grid; place-content: center; text-align: center; overflow: hidden; color: var(--white); background: #0b201b; }
-.interlude::before { content: ""; position: absolute; inset: 0; opacity: .28; background: radial-gradient(circle at center, rgba(196,163,90,.16), transparent 38%); }
-.interlude-ring { position: absolute; top: 50%; left: 50%; width: min(70vw, 48rem); aspect-ratio: 1; border: 1px solid rgba(224,203,152,.2); border-radius: 50%; transform: translate(-50%,-50%); }
-.interlude-ring::before, .interlude-ring::after { content: ""; position: absolute; border: 1px solid rgba(224,203,152,.16); border-radius: 50%; }
-.interlude-ring::before { inset: 12%; }
-.interlude-ring::after { inset: 24%; }
-.interlude-ring span { position: absolute; inset: -1.1rem; border: 1px dashed rgba(224,203,152,.18); border-radius: 50%; animation: slowSpin 35s linear infinite; }
-.interlude-ring i { position: absolute; inset: 0; display: grid; place-items: center; color: rgba(224,203,152,.08); font-family: var(--serif); font-size: 16rem; font-style: normal; }
+/* Live signature timepiece */
+.signature-timepiece { position: relative; min-height: 100vh; display: grid; place-items: center; overflow: hidden; isolation: isolate; color: #fff; text-align: center; background: radial-gradient(circle at 50% 50%, #0e2a22, #07130f 75%); }
+.signature-timepiece::after { content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none; background: linear-gradient(180deg, rgba(6,17,15,.25), transparent 22%, transparent 76%, rgba(6,17,15,.52)); }
+.signature-dial { position: absolute; top: 50%; left: 50%; width: min(150vmin, 71.875rem); aspect-ratio: 1; opacity: 0; transform: translate(-50%,-50%) scale(.94); transition: opacity 2.4s ease, transform 2.4s ease; }
+.signature-timepiece.is-visible .signature-dial { opacity: 1; transform: translate(-50%,-50%) scale(1); }
+.signature-dial svg { width: 100%; height: 100%; overflow: visible; }
+.signature-ring, .signature-bezel, .signature-ticks line { fill: none; stroke: var(--gold-light); vector-effect: non-scaling-stroke; }
+.signature-ring { stroke-width: 1; }
+.ring-inner, .ring-middle, .ring-outer { opacity: .2; }
+.signature-bezel { opacity: .3; stroke-width: 1; stroke-dasharray: 2 7; transform-origin: center; animation: signatureBezel 240s linear infinite; }
+.signature-ticks line { opacity: .22; stroke-width: 1; }
+.signature-ticks line.major { opacity: .5; stroke-width: 1.6; }
+.signature-hour-hand line, .signature-minute-hand line { stroke: var(--white); stroke-linecap: round; vector-effect: non-scaling-stroke; }
+.signature-hour-hand line { opacity: .28; stroke-width: 3; }
+.signature-minute-hand line { opacity: .28; stroke-width: 2; }
+.signature-second-hand polygon, .signature-second-hand circle { fill: var(--gold-light); opacity: .9; }
+.signature-second-trail path { fill: none; stroke: var(--gold-light); stroke-width: 2.2; vector-effect: non-scaling-stroke; }
+.signature-hour-hand, .signature-minute-hand, .signature-second-hand { transform-origin: 0 0; }
+.signature-pin-outer { fill: var(--gold-light); }
+.signature-pin-inner { fill: #0b211b; }
+.signature-monogram { position: absolute; top: 50%; left: 50%; z-index: 0; margin: 0; color: transparent; font-family: var(--serif); font-size: clamp(9.375rem,30vw,26.25rem); font-weight: 500; line-height: 1; letter-spacing: -.02em; user-select: none; transform: translate(-50%,-52%); background: linear-gradient(105deg,rgba(255,255,255,.05) 40%,rgba(240,205,130,.5) 50%,rgba(255,255,255,.05) 60%) 100% 0/250% 100%; background-clip: text; -webkit-background-clip: text; animation: signatureShine 9s ease-in-out 2s infinite; }
+.signature-copy { position: relative; z-index: 2; padding: 0 20px; }
+.signature-eyebrow { margin-bottom: 1.125rem; color: var(--gold-light); font-size: .75rem; font-weight: 500; text-transform: uppercase; letter-spacing: .2em; opacity: 0; transform: translateY(8px); transition: opacity 1.2s ease, transform 1.2s ease; }
+.signature-copy h2 { margin: 0; color: #fff; font-family: var(--serif); font-size: clamp(46px, 8.4vw, 112px); font-weight: 500; font-style: italic; line-height: 1.1; letter-spacing: normal; }
+.signature-word { display: inline-block; opacity: 0; filter: blur(14px); transform: translateY(14px); transition: opacity 1.3s ease, filter 1.3s ease, transform 1.3s ease; transition-delay: calc(.6s + var(--word-index) * .22s); }
+.signature-timepiece.is-visible .signature-eyebrow, .signature-timepiece.is-visible .signature-word { opacity: 1; filter: blur(0); transform: translateY(0); }
+.signature-seal { position: absolute; z-index: 2; bottom: clamp(24px,6vh,60px); left: 50%; width: clamp(130px,16vw,190px); display: grid; grid-template-columns: 2.8rem 1fr; align-items: center; column-gap: .35rem; opacity: 0; transform: translateX(-50%); transition: opacity 2s ease 2.2s; }
+.signature-timepiece.is-visible .signature-seal { opacity: .95; transform: translateX(-50%); }
+.signature-seal img { grid-row: 1 / 3; width: 2.8rem; height: 2.2rem; object-fit: contain; }
+.signature-seal strong { align-self: end; color: #fff; font-family: var(--serif); font-size: 1rem; font-weight: 600; line-height: 1; text-align: left; white-space: nowrap; }
+.signature-seal span { align-self: start; color: var(--gold-light); font-size: .38rem; text-transform: uppercase; text-align: left; letter-spacing: .16em; white-space: nowrap; }
+@keyframes signatureBezel { to { transform: rotate(-360deg); } }
+@keyframes signatureShine { 0% { background-position: 100% 0; } 55%, 100% { background-position: 0 0; } }
 @keyframes slowSpin { to { transform: rotate(360deg); } }
-.interlude > p, .interlude > h2 { position: relative; z-index: 2; }
-.interlude > p { margin-bottom: 1.1rem; color: var(--gold-light); font-size: .68rem; text-transform: uppercase; letter-spacing: .22em; }
-.interlude > h2 { font-family: var(--serif); font-size: clamp(4rem, 8vw, 8rem); font-weight: 400; font-style: italic; line-height: .9; }
 
 /* Editorial */
 .editorial { padding: 10rem var(--gutter) 12rem; }
@@ -325,7 +354,6 @@ footer > p { margin: 0; }
   .manifesto > .chapter-label { position: static; }
   .collection-heading { grid-template-columns: 1fr 1fr; }
   .collection-heading .chapter-label { grid-column: 1 / -1; }
-  .collection-list { grid-template-columns: 1fr; }
   .collection-panel > a { min-height: 38rem; }
   .lineup-pin { grid-template-columns: minmax(15rem,.6fr) minmax(31rem,1.4fr); gap: 3rem; }
   .lineup-card { min-height: min(61vh,31rem); grid-template-columns: .85fr 1.15fr; }
@@ -398,9 +426,11 @@ footer > p { margin: 0; }
   .mode-orbit { width: 30rem; }
   .mode-card { width: 13rem; }
   .mode-stage-word { font-size: 7rem; }
-  .interlude { min-height: 39rem; }
-  .interlude-ring { width: 35rem; }
-  .interlude-ring i { font-size: 10rem; }
+  .signature-timepiece { min-height: 100vh; }
+  .signature-dial { width: min(150vmin,71.875rem); }
+  .signature-monogram { font-size: clamp(9rem,48vw,15rem); }
+  .signature-copy { padding: 0 20px; }
+  .signature-copy h2 { max-width: 40rem; margin-inline: auto; font-size: clamp(46px,14vw,72px); line-height: 1.05; }
   .editorial { padding: 7rem var(--gutter); }
   .editorial-head { grid-template-columns: 1fr; gap: 3rem; margin-bottom: 4rem; }
   .editorial-head h2 { font-size: 4rem; }
@@ -433,6 +463,10 @@ footer > p { margin: 0; }
   body.is-loading { overflow: auto; }
   .reveal, .hero-eyebrow, .hero-bottom { opacity: 1; transform: none; }
   .manifesto h2 .word { opacity: 1; transform: none; letter-spacing: 0; }
+  .signature-dial, .signature-eyebrow, .signature-word, .signature-seal { opacity: 1; filter: none; transform: none; }
+  .signature-dial { transform: translate(-50%,-50%); }
+  .signature-seal { transform: translate(-50%,0); }
+  .signature-bezel, .signature-monogram { animation: none; }
   .title-line > span { transform: none; }
   .lineup-pin { display: block; }
   .lineup-intro { position: relative; top: auto; }

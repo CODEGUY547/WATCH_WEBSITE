@@ -50,6 +50,40 @@ nav.querySelectorAll("a").forEach((link) => {
   });
 });
 
+// Touch-friendly collection carousel
+if (window.Swiper && document.querySelector(".collection-carousel")) {
+  new Swiper(".collection-carousel", {
+    slidesPerView: 1.08,
+    spaceBetween: 12,
+    speed: reduceMotion ? 0 : 850,
+    grabCursor: true,
+    watchOverflow: true,
+    resistanceRatio: .7,
+    keyboard: {
+      enabled: true,
+      onlyInViewport: true
+    },
+    navigation: {
+      nextEl: ".collection-next",
+      prevEl: ".collection-prev"
+    },
+    pagination: {
+      el: ".collection-pagination",
+      clickable: true
+    },
+    breakpoints: {
+      700: {
+        slidesPerView: 1.65,
+        spaceBetween: 12
+      },
+      1050: {
+        slidesPerView: 3,
+        spaceBetween: 12
+      }
+    }
+  });
+}
+
 // Playful watch-personality selector
 const modeData = {
   quiet: {
@@ -121,6 +155,80 @@ const revealObserver = new IntersectionObserver((entries) => {
 
 document.querySelectorAll(".reveal").forEach((item) => revealObserver.observe(item));
 
+// Signature timepiece: real local time, active only while the section is seen.
+const signatureSection = document.querySelector(".signature-timepiece");
+const signatureTicks = document.querySelector(".signature-ticks");
+const signatureHourHand = document.querySelector(".signature-hour-hand");
+const signatureMinuteHand = document.querySelector(".signature-minute-hand");
+const signatureSecondHand = document.querySelector(".signature-second-hand");
+const signatureTrail = document.querySelector(".signature-second-trail");
+const svgNamespace = "http://www.w3.org/2000/svg";
+let signatureFrame;
+let signatureClockRunning = false;
+
+if (signatureTicks) {
+  for (let minute = 0; minute < 60; minute += 1) {
+    const line = document.createElementNS(svgNamespace, "line");
+    const major = minute % 5 === 0;
+    line.setAttribute("x1", "0");
+    line.setAttribute("y1", major ? "-368" : "-374");
+    line.setAttribute("x2", "0");
+    line.setAttribute("y2", "-386");
+    line.setAttribute("transform", `rotate(${minute * 6})`);
+    if (major) line.classList.add("major");
+    signatureTicks.appendChild(line);
+  }
+}
+
+if (signatureTrail) {
+  const pointOnTrail = (angle) => [
+    380 * Math.sin(angle * Math.PI / 180),
+    -380 * Math.cos(angle * Math.PI / 180)
+  ];
+
+  for (let index = 0; index < 32; index += 1) {
+    const start = pointOnTrail(-(index + 1) * 1.6);
+    const end = pointOnTrail(-index * 1.6);
+    const path = document.createElementNS(svgNamespace, "path");
+    path.setAttribute("d", `M${start[0]} ${start[1]}A380 380 0 0 1 ${end[0]} ${end[1]}`);
+    path.style.opacity = String(.55 * (1 - index / 32));
+    signatureTrail.appendChild(path);
+  }
+}
+
+function updateSignatureClock() {
+  const now = new Date();
+  const milliseconds = now.getMilliseconds();
+  const seconds = now.getSeconds() + milliseconds / 1000;
+  const minutes = now.getMinutes() + seconds / 60;
+  const hours = (now.getHours() % 12) + minutes / 60;
+  const secondAngle = seconds * 6;
+
+  signatureHourHand?.setAttribute("transform", `rotate(${hours * 30})`);
+  signatureMinuteHand?.setAttribute("transform", `rotate(${minutes * 6})`);
+  signatureSecondHand?.setAttribute("transform", `rotate(${secondAngle})`);
+
+  if (signatureClockRunning && !reduceMotion) signatureFrame = requestAnimationFrame(updateSignatureClock);
+}
+
+if (signatureSection) {
+  const signatureObserver = new IntersectionObserver(([entry]) => {
+    if (entry.isIntersecting) {
+      signatureSection.classList.add("is-visible");
+      if (!signatureClockRunning) {
+        signatureClockRunning = true;
+        updateSignatureClock();
+      }
+    } else {
+      signatureClockRunning = false;
+      cancelAnimationFrame(signatureFrame);
+    }
+  }, { threshold: .3 });
+
+  signatureObserver.observe(signatureSection);
+  if (reduceMotion) updateSignatureClock();
+}
+
 const manifesto = document.querySelector(".manifesto");
 const kineticWords = [...document.querySelectorAll(".word-reveal .word")];
 
@@ -150,7 +258,6 @@ function updateKineticWords() {
 
 // Scroll-linked details
 let ticking = false;
-let previousScroll = 0;
 const heroMedia = document.querySelector("[data-parallax]");
 
 function updateScrollDetails() {
@@ -167,13 +274,6 @@ function updateScrollDetails() {
 
   updateKineticWords();
 
-  if (y > previousScroll && y > 260 && !nav.classList.contains("open")) {
-    header.style.transform = "translateY(-100%)";
-  } else {
-    header.style.transform = "";
-  }
-
-  previousScroll = Math.max(y, 0);
   ticking = false;
 }
 
