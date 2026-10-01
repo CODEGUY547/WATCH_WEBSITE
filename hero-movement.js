@@ -267,19 +267,27 @@ addEventListener("scroll",()=>{clearTimeout(syncTimer);syncTimer=setTimeout(hard
 addEventListener("hashchange",()=>requestAnimationFrame(()=>hardSync(true)));
 document.querySelectorAll('a[href="#top"]').forEach(link=>link.addEventListener("click",event=>{
   event.preventDefault();
-  if(progressTween)progressTween.kill();
-  scrollTo(0,0);
-  if(location.hash!=="#top")history.pushState(null,"","#top");
-  requestAnimationFrame(()=>{
+  sessionStorage.setItem("wm-skip-splash","1");
+  history.replaceState(null,"",location.pathname+"#top");
+  location.reload();
+}));
+gsap.ticker.add(time=>{sceneTimeline.progress(controller.p);if(visible||(playhead.p>0&&playhead.p<.999))render(playhead.p,time*1000)});
+render(0,performance.now());
+if(body.classList.contains("returning-home")){
+  const resetHome=()=>{
+    scrollTo(0,0);
     ScrollTrigger.update();
+    if(progressTween)progressTween.kill();
     controller.p=0;
     sceneTimeline.progress(0);
     visible=true;
     render(0,performance.now());
-  });
-}));
-gsap.ticker.add(time=>{sceneTimeline.progress(controller.p);if(visible||(playhead.p>0&&playhead.p<.999))render(playhead.p,time*1000)});
-render(0,performance.now());
+  };
+  resetHome();
+  requestAnimationFrame(resetHome);
+  setTimeout(resetHome,100);
+  setTimeout(()=>{resetHome();body.classList.remove("returning-home")},450);
+}
 if(initialHash&&initialHash!=="#top")requestAnimationFrame(()=>requestAnimationFrame(()=>{
   const target=document.querySelector(initialHash);
   if(!target)return;

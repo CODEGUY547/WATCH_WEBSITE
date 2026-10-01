@@ -7,10 +7,22 @@ const splashCount = document.querySelector(".splash-count");
 const splashProgress = document.querySelector(".splash-load-line span");
 const splash = document.querySelector(".splash");
 const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+const skipSplash = sessionStorage.getItem("wm-skip-splash") === "1";
+if (skipSplash) {
+  sessionStorage.removeItem("wm-skip-splash");
+  body.classList.add("returning-home");
+  history.scrollRestoration = "manual";
+  window.scrollTo(0, 0);
+  requestAnimationFrame(() => window.scrollTo(0, 0));
+  window.addEventListener("load", () => {
+    window.scrollTo(0, 0);
+    window.setTimeout(() => { history.scrollRestoration = "auto"; }, 500);
+  }, { once: true });
+}
 
 // Opening sequence. Keep one consistent timeline so the mark never flashes or
 // exits before its wordmark and tagline have finished resolving.
-const splashDuration = reduceMotion ? 0 : 2200;
+const splashDuration = reduceMotion || skipSplash ? 0 : 2200;
 const splashStart = performance.now();
 
 function animateCount(now) {
@@ -21,7 +33,7 @@ function animateCount(now) {
   if (elapsed < splashDuration) requestAnimationFrame(animateCount);
 }
 
-if (!reduceMotion) requestAnimationFrame(animateCount);
+if (!reduceMotion && !skipSplash) requestAnimationFrame(animateCount);
 
 function finishSplash() {
   body.classList.remove("is-loading");
@@ -30,7 +42,8 @@ function finishSplash() {
 }
 
 // Never make the opening dependent on external font or image loading.
-window.setTimeout(finishSplash, splashDuration);
+if (skipSplash) finishSplash();
+else window.setTimeout(finishSplash, splashDuration);
 
 // Navigation
 menuButton.addEventListener("click", () => {
