@@ -8,6 +8,11 @@ if(!img)return;
 const gsap=window.gsap,ScrollTrigger=window.ScrollTrigger;
 if(!gsap||!ScrollTrigger){console.warn("Wrist Mode motion: GSAP or ScrollTrigger did not load.");return}
 gsap.registerPlugin(ScrollTrigger);
+const initialHash=location.hash;
+if(initialHash&&initialHash!=="#top"){
+  history.replaceState(null,"",location.pathname+location.search);
+  scrollTo(0,0);
+}
 const $=id=>document.getElementById(id),NS="http://www.w3.org/2000/svg";
 const IW=1774,IH=887,DX=1197,DY=406,DR=185,HM=[[1.1979386193312955, 0.5589586801592981, 1201.9919810126994], [0.3538126018123421, 1.3715384717444559, 407.0244184076511], [4.934528560224444e-05, 0.000604922166743398, 1.0]];
 const cl=(v,a,b)=>Math.min(b,Math.max(a,v)),ease=t=>1-Math.pow(1-t,3),sm=t=>t*t*(3-2*t);
@@ -229,8 +234,12 @@ ScrollTrigger.addEventListener("refreshInit",layout);
 const scrollDistance=()=>calm?3.2:innerWidth<=700?5.15:6.1;
 const controller={p:0};
 const sceneTimeline=gsap.timeline({paused:true}).to(playhead,{p:1,duration:1,ease:"none"});
-const progressTo=gsap.quickTo(controller,"p",{duration:calm?0:innerWidth<=700?.62:.9,ease:"power2.out"});
-const motionTrigger=ScrollTrigger.create({
+let progressTween=null,syncTimer=0;
+const glideTo=progress=>{
+  if(calm){controller.p=progress;return}
+  progressTween=gsap.to(controller,{p:progress,duration:innerWidth<=700?.62:.9,ease:"power2.out",overwrite:true});
+};
+const createMotionTrigger=()=>ScrollTrigger.create({
   trigger:journey,
   start:"top top",
   end:()=>"+="+Math.round(innerHeight*scrollDistance()),
@@ -238,10 +247,45 @@ const motionTrigger=ScrollTrigger.create({
   pinSpacing:true,
   anticipatePin:1,
   invalidateOnRefresh:true,
-  onUpdate:self=>calm?controller.p=self.progress:progressTo(self.progress),
+  onUpdate:self=>glideTo(self.progress),
   onRefresh:self=>{controller.p=self.progress;sceneTimeline.progress(self.progress)},
   onToggle:self=>{visible=self.isActive||self.progress===0}
 });
+let motionTrigger=createMotionTrigger();
+const hardSync=(force=false)=>{
+  const range=motionTrigger.end-motionTrigger.start;
+  if(range<=0)return;
+  const expected=cl((scrollY-motionTrigger.start)/range,0,1);
+  if(!force&&Math.abs(expected-controller.p)<.45)return;
+  if(progressTween)progressTween.kill();
+  controller.p=expected;
+  sceneTimeline.progress(expected);
+  visible=expected<1;
+  render(expected,performance.now());
+};
+addEventListener("scroll",()=>{clearTimeout(syncTimer);syncTimer=setTimeout(hardSync,140)},{passive:true});
+addEventListener("hashchange",()=>requestAnimationFrame(()=>hardSync(true)));
+document.querySelectorAll('a[href="#top"]').forEach(link=>link.addEventListener("click",event=>{
+  event.preventDefault();
+  if(progressTween)progressTween.kill();
+  scrollTo(0,0);
+  if(location.hash!=="#top")history.pushState(null,"","#top");
+  requestAnimationFrame(()=>{
+    ScrollTrigger.update();
+    controller.p=0;
+    sceneTimeline.progress(0);
+    visible=true;
+    render(0,performance.now());
+  });
+}));
 gsap.ticker.add(time=>{sceneTimeline.progress(controller.p);if(visible||(playhead.p>0&&playhead.p<.999))render(playhead.p,time*1000)});
 render(0,performance.now());
+if(initialHash&&initialHash!=="#top")requestAnimationFrame(()=>requestAnimationFrame(()=>{
+  const target=document.querySelector(initialHash);
+  if(!target)return;
+  scrollTo(0,target.getBoundingClientRect().top+scrollY);
+  ScrollTrigger.update();
+  hardSync(true);
+  history.replaceState(null,"",initialHash);
+}));
 })();
