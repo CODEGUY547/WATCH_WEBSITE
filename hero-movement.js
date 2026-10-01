@@ -5,6 +5,9 @@
 const CLEAN=window.WM_CLEAN_SRC||"assets/wrist-mode-hero-clean.jpg";
 const hero=document.querySelector(".hero"),media=hero&&hero.querySelector(".hero-media"),img=media&&media.querySelector("img");
 if(!img)return;
+const gsap=window.gsap,ScrollTrigger=window.ScrollTrigger;
+if(!gsap||!ScrollTrigger){console.warn("Wrist Mode motion: GSAP or ScrollTrigger did not load.");return}
+gsap.registerPlugin(ScrollTrigger);
 const $=id=>document.getElementById(id),NS="http://www.w3.org/2000/svg";
 const IW=1774,IH=887,DX=1197,DY=406,DR=185,HM=[[1.1979386193312955, 0.5589586801592981, 1201.9919810126994], [0.3538126018123421, 1.3715384717444559, 407.0244184076511], [4.934528560224444e-05, 0.000604922166743398, 1.0]];
 const cl=(v,a,b)=>Math.min(b,Math.max(a,v)),ease=t=>1-Math.pow(1-t,3),sm=t=>t*t*(3-2*t);
@@ -53,8 +56,8 @@ function gearPath(r,n,holes,hubR,rim){
 const spiral=(r0,r1,turns)=>{let d="",N=turns*40;for(let i=0;i<=N;i++){const a=i/40*2*Math.PI,r=r0+(r1-r0)*i/N;d+=(i?"L":"M")+(r*Math.cos(a)).toFixed(1)+" "+(r*Math.sin(a)).toFixed(1)}return d};
 const el=(t,a,parent)=>{const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);parent&&parent.appendChild(e);return e};
 // ---------- build layers (0 plate,1 barrel,2 gears,3 escapement,4 balance,5 jewels)
-const world=$("wm-world"),L=[],I=[];
-for(let i=0;i<6;i++){const g=el("g",{},world);L.push(g);I.push(el("g",i?{filter:"url(#wm-bevel)"}:{},g))}
+const world=$("wm-world"),L=[],I=[],liteFx=calm||matchMedia("(max-width:700px)").matches;
+for(let i=0;i<6;i++){const g=el("g",{},world);L.push(g);I.push(el("g",i&&!liteFx?{filter:"url(#wm-bevel)"}:{},g))}
 const off=t=>`scale(1.12) translate(-20 28) ${t||""}`;
 const screw=(p,x,y,r,s=9)=>{const g=el("g",{transform:`translate(${x} ${y})`},p);
   el("circle",{r:s,fill:"url(#wm-blued)",stroke:"#081226","stroke-width":1},g);
@@ -157,7 +160,7 @@ function heroPhase(h){
   const cx=LY.ml+LY.mw/2,cy=LY.mt+LY.mh/2,rx=LY.ml+LY.ox+DX*LY.k,ry=LY.mt+LY.oy+DY*LY.k;
   const D=[cx+a*(rx-cx),cy+a*(ry-cy)],ra=DR*LY.k*a,u2=mn/630*1.05,T=[W/2+(pt?0:170*u2),H/2+(pt?-136*u2:0)];
   const Ke=300*u2*.93/ra,z=ease(cl(h/.5,0,1)),K=1+(Ke-1)*z,px=D[0]+(T[0]-D[0])*z,py=D[1]+(T[1]-D[1])*z;
-  zoom.style.transform="translate("+(px-K*D[0])+"px,"+(py-K*D[1])+"px) scale("+K+")";
+  gsap.set(zoom,{x:px-K*D[0],y:py-K*D[1],scale:K,force3D:true});
   const dr=ra*K*.97,Rf=Math.hypot(W,H);let hr=0;if(h>=.5)hr=h<.68?dr*ease((h-.5)/.18):dr+(Rf-dr)*ease((h-.68)/.32);
   hero.style.setProperty("--mx",px+"px");hero.style.setProperty("--my",py+"px");hero.style.setProperty("--hr",hr+"px");
   const f=1-cl(h/.25,0,1);fadeEls.forEach(e=>{e.style.opacity=f;e.style.pointerEvents=f<.3?"none":""});if(dialLines)dialLines.style.opacity=.25*f;
@@ -170,36 +173,75 @@ function heroPhase(h){
 }
 /* 7. phase two: the camera travels through the movement */
 const S=[{s:1.05,c:[0,0],o:[170,0],vis:0,expl:1,f:null,dim:1},{s:1.05,c:[0,0],o:[170,0],vis:1,expl:0,f:null,dim:1},{s:1.9,c:[-157,-36],o:[190,0],vis:1,expl:0,f:[1],dim:1},{s:1.9,c:[22,65],o:[190,0],vis:1,expl:0,f:[2],dim:1},{s:1.8,c:[153,-13],o:[190,0],vis:1,expl:0,f:[3,4],dim:1}];
-const KN=[0,.17,.42,.68,.94],cur=[1,0,0,0,0,0];
-let visible=true,vel=0,lastY=scrollY;
-function frame(now){
-  requestAnimationFrame(frame);if(!visible)return;
-  const r=journey.getBoundingClientRect(),P=cl(-r.top/(journey.offsetHeight-innerHeight),0,1),y=scrollY;
-  vel+=(Math.abs(y-lastY)-vel)*.1;lastY=y;
+const KN=[0,.17,.42,.68,.94],cur=[1,0,0,0,0,0],playhead={p:0};
+let visible=true,vel=0,lastP=0,lastAct=-2,exitShown=false,soundHidden=false;
+gsap.set(CH,{autoAlpha:0,y:22});
+gsap.set(exitLink,{autoAlpha:0,xPercent:-50,y:16});
+gsap.set(pr,{opacity:0});
+gsap.set(prf,{scaleY:0,transformOrigin:"top"});
+
+function setChapter(active){
+  if(active===lastAct)return;
+  CH.forEach((card,index)=>gsap.to(card,{autoAlpha:index===active?1:0,y:index===active?0:22,duration:calm?0:.48,ease:"power3.out",overwrite:true}));
+  lastAct=active;
+}
+function setFinalControls(P){
+  const showExit=P>.92,hideSound=P>.88;
+  if(showExit!==exitShown){
+    exitLink.classList.toggle("on",showExit);
+    gsap.to(exitLink,{autoAlpha:showExit?1:0,y:showExit?0:16,duration:calm?0:.45,ease:"power2.out",overwrite:true});
+    exitShown=showExit;
+  }
+  if(hideSound!==soundHidden){
+    sbtn.classList.toggle("is-hidden",hideSound);
+    gsap.to(sbtn,{autoAlpha:hideSound?0:1,duration:calm?0:.3,overwrite:true});
+    soundHidden=hideSound;
+  }
+}
+function render(P,now){
+  const delta=Math.abs(P-lastP);vel+=(delta*12000-vel)*.12;lastP=P;
   heroPhase(sm(cl(P/KN[1],0,1)));
   let i=0;while(i<3&&P>=KN[i+1])i++;
   const u=sm(cl((P-KN[i])/(KN[i+1]-KN[i]),0,1)),A=S[i],B=S[i+1],m=k=>A[k]+(B[k]-A[k])*u,mv=(k,j)=>A[k][j]+(B[k][j]-A[k][j])*u;
   let ox=mv("o",0),oy=mv("o",1);if(innerWidth<innerHeight*.9){oy-=ox*.8;ox=0}
-  cam.setAttribute("transform","translate("+ox+" "+oy+") scale("+m("s")+") translate("+(-mv("c",0))+" "+(-mv("c",1))+")");
-  const f=(u<.5?A:B).f,ex=m("expl"),vs=m("vis"),dim=m("dim");
-  L.forEach((g,k)=>{
-    const tg=k?vs*dim*(f?(f.includes(k)?1:k===5?.6:.28):1):dim*(f?.6:1);
-    cur[k]+=(tg-cur[k])*.15;g.setAttribute("opacity",cur[k].toFixed(3));
-    g.setAttribute("transform",k?"translate(0 "+(-k*55*ex).toFixed(1)+")":"");
-    g.classList.toggle("lit",!!f&&f.includes(k));
+  cam.setAttribute("transform","translate("+ox.toFixed(2)+" "+oy.toFixed(2)+") scale("+m("s").toFixed(4)+") translate("+(-mv("c",0)).toFixed(2)+" "+(-mv("c",1)).toFixed(2)+")");
+  const focus=(u<.5?A:B).f,exploded=m("expl"),shown=m("vis"),dim=m("dim");
+  L.forEach((group,k)=>{
+    const target=k?shown*dim*(focus?(focus.includes(k)?1:k===5?.6:.28):1):dim*(focus?.6:1);
+    cur[k]+=(target-cur[k])*.16;
+    group.setAttribute("opacity",cur[k].toFixed(3));
+    group.setAttribute("transform",k?"translate(0 "+(-k*55*exploded).toFixed(1)+")":"");
+    group.classList.toggle("lit",!!focus&&focus.includes(k));
   });
-  let act=-1;if(P>=KN[1]-.03){let b=9;for(let j=1;j<5;j++){const dd=Math.abs(P-KN[j]);if(dd<b){b=dd;act=j-1}}}
-  CH.forEach((c,j)=>c.classList.toggle("on",j===act));
-  exitLink.classList.toggle("on",P>.92);
-  sbtn.classList.toggle("is-hidden",P>.88);
-  pr.style.opacity=cl((P-.05)/.1,0,1);prf.style.transform="scaleY("+P+")";
-  const ns=Math.floor(y*.35/6);if(ns!==lastNs){if(sndOn&&now-lastClick>60){tick();lastClick=now}lastNs=ns}
-  const raw=(y*.35+(calm?0:now/1000*24))/6,n=Math.floor(raw),fr=raw-n,st=fr<.35?ease(fr/.35):1,Ag=6*(n+st);
-  G.forEach(q=>q.rot.setAttribute("transform","rotate("+(q.s*Ag*30/q.t).toFixed(2)+")"));
-  const kk=Math.cos(Math.PI*(n+st));
-  bal.setAttribute("transform","rotate("+((150+Math.min(40,vel*2))*kk).toFixed(1)+")");fork.setAttribute("transform","rotate("+(9*kk).toFixed(2)+")");
+  let active=-1;if(P>=KN[1]-.03){let nearest=9;for(let j=1;j<5;j++){const distance=Math.abs(P-KN[j]);if(distance<nearest){nearest=distance;active=j-1}}}
+  setChapter(active);setFinalControls(P);
+  gsap.set(pr,{opacity:cl((P-.05)/.1,0,1)});gsap.set(prf,{scaleY:P});
+  const ns=Math.floor(P*900);if(ns!==lastNs){if(sndOn&&now-lastClick>60){tick();lastClick=now}lastNs=ns}
+  const raw=P*185+(calm?0:now/1000*4),n=Math.floor(raw),fr=raw-n,step=fr<.35?ease(fr/.35):1,angle=6*(n+step);
+  G.forEach(q=>q.rot.setAttribute("transform","rotate("+(q.s*angle*30/q.t).toFixed(2)+")"));
+  const pulse=Math.cos(Math.PI*(n+step));
+  bal.setAttribute("transform","rotate("+((150+Math.min(40,vel))*pulse).toFixed(1)+")");
+  fork.setAttribute("transform","rotate("+(9*pulse).toFixed(2)+")");
 }
-layout();addEventListener("resize",layout);if(document.fonts&&document.fonts.ready)document.fonts.ready.then(layout);
-new IntersectionObserver(e=>{visible=e[0].isIntersecting}).observe(journey);
-requestAnimationFrame(frame);
+
+layout();if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>{layout();ScrollTrigger.refresh()});
+ScrollTrigger.addEventListener("refreshInit",layout);
+const scrollDistance=()=>calm?3.2:innerWidth<=700?5.15:6.1;
+const controller={p:0};
+const sceneTimeline=gsap.timeline({paused:true}).to(playhead,{p:1,duration:1,ease:"none"});
+const progressTo=gsap.quickTo(controller,"p",{duration:calm?0:innerWidth<=700?.62:.9,ease:"power2.out"});
+const motionTrigger=ScrollTrigger.create({
+  trigger:journey,
+  start:"top top",
+  end:()=>"+="+Math.round(innerHeight*scrollDistance()),
+  pin:pin,
+  pinSpacing:true,
+  anticipatePin:1,
+  invalidateOnRefresh:true,
+  onUpdate:self=>calm?controller.p=self.progress:progressTo(self.progress),
+  onRefresh:self=>{controller.p=self.progress;sceneTimeline.progress(self.progress)},
+  onToggle:self=>{visible=self.isActive||self.progress===0}
+});
+gsap.ticker.add(time=>{sceneTimeline.progress(controller.p);if(visible||(playhead.p>0&&playhead.p<.999))render(playhead.p,time*1000)});
+render(0,performance.now());
 })();
