@@ -389,15 +389,21 @@ footer > p { margin: 0; }
   .site-header { height: 5.25rem; }
   .brand { font-size: 1.25rem; }
   .brand-mark { width: 2rem; }
-  .hero { min-height: 52rem; align-items: flex-end; padding-bottom: 7rem; }
+  .hero {
+    box-sizing: border-box;
+    min-height: 100svh;
+    min-height: 100dvh;
+    align-items: flex-end;
+    padding: calc(5.25rem + 1rem) 0 max(2rem, env(safe-area-inset-bottom));
+  }
   .hero-media { inset: -4%; }
   .hero-media img { object-position: 62% center; }
   .hero-vignette { background: linear-gradient(0deg, rgba(2,8,7,.97) 0%, rgba(3,10,9,.6) 58%, rgba(3,10,9,.22) 100%); }
   .dial-lines { right: -18rem; width: 38rem; }
   .hero-copy { margin-bottom: 0; }
   .hero-eyebrow { max-width: 20rem; }
-  h1 { font-size: clamp(4.4rem, 22vw, 6.5rem); line-height: .75; }
-  .title-indent { padding-left: 1.8rem; }
+  h1 { font-size: clamp(2.5rem, 12vw, 3.5rem); line-height: .86; }
+  .title-indent { padding-left: 1.1rem; }
   .hero-bottom { display: block; padding-left: 1.8rem; }
   .hero-bottom > p { max-width: 21rem; font-size: .8rem; }
   .circle-link { width: 4.8rem; margin-top: 1.5rem; }
